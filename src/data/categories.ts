@@ -1,6 +1,6 @@
 // List of categories for blog posts
 export const CATEGORIES = [
-	'HackTheBox',
+	'HTB',
 	'TryHackMe',
 	'AWS',
 	'Azure',
