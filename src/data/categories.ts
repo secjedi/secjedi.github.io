@@ -1,9 +1,10 @@
 // List of categories for blog posts
 export const CATEGORIES = [
-	'HTB',
-	'TryHackMe',
-	'AWS',
-	'Azure',
+	'Defensive',
+	'Embedded',
+	'Cloud',
+	'Portswigger labs',
 	'Hacking Tips',
-	'Tools'
+	'ICS',
+	'CTF'
 ] as const
