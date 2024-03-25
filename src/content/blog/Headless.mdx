@@ -1,0 +1,27 @@
+---
+heroImage: /src/assets/images/headless/Headless.png
+category: CTF
+description: '''Hackthebox Season Machine: Headless'''
+pubDate: 2024-03-24T23:00:00.000Z
+tags:
+  - HTB
+title: Headless
+---
+
+Machine IP: 10.10.11.8
+
+## Scanning
+
+### Nmap
+
+```markdown
+sudo nmap - sC - sV - oA head_scan 10.10.11.8
+```
+
+![](/src/assets/images/headless/nmap.png)
+
+### Rustscan
+
+```markdown
+rustscan - a 10.10.11.8 --ulimit 5000 -- - A
+```
