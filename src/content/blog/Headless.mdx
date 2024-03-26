@@ -18,10 +18,37 @@ Machine IP: 10.10.11.8
 sudo nmap - sC - sV - oA head_scan 10.10.11.8
 ```
 
-![](/src/assets/images/headless/nmap.png)
+![](/src/assets/images/headless/nmap.png)We have two ports; 22 and 5000. Port 22 is typically not an entry port for RCE. Technically we can enumerate port 22 when we have some credentials. So looking at port 5000
 
-### Rustscan
+#### Port 5000
 
-```markdown
-rustscan - a 10.10.11.8 --ulimit 5000 -- - A
-```
+![](/src/assets/images/headless/port_5000.png)
+
+If we click on the 'for questions' button, we get the /support directory
+
+![](/src/assets/images/headless/support.png)
+
+Test if special characters (", ', \<, >) are supported then we also test with SQLi and XSS payloads. It works with xss payload: \</scrip\</script>t>\<img src =q onerror=prompt(8)>
+
+Also notice that we get the admin cookie in the cookie header of the response. InVzZXIi.uAlmXlTvm8vyihjNaPDWnvB\_Zfs
+
+File and Directory enumeration
+
+dirsearch -uhttp\://10.10.11.8:5000![](/src/assets/images/headless/xss.png)
+
+#### Directory Enumeration
+
+`dirsearch -u `[`http://10.10.11.8:5000`![](/src/assets/images/headless/dir.png)](http://10.10.11.8:5000)We have an extra directory /dashboard.
+
+Going to the dashboard page, we see that we are unauthorized to access it![](/src/assets/images/headless/dashboard.png)
+
+What do we have??
+
+* A website running on port 5000
+* XSS on from the /support page with admin cookie exposed in the response
+* dashboard directory we dont have access to
+* Now, Get RCE via XSS using cookie
+
+Using the concept from: 
+
+Let's capture our request on burpsuite for easy of replay and repeat
