@@ -13,3 +13,29 @@ tags: ['THM', '.db files', 'SQL']
 
 See Config files section here:
 https://tryhackme.com/room/breachingad
+![](../../assets/images/db/1.png)
+![](../../assets/images/db/2.png)
+
+OR
+```
+sqlite3 ./Audit.db                           
+.tables
+.schema Ldap
+select uname, pwd FROM Ldap;
+```
+![](../../assets/images/db/3.png)
+![](../../assets/images/db/4.png)
+![](../../assets/images/db/5.png)
+
+Decode sqlite password
+https://dotnetfiddle.net/G2eVVb
+
+Google decode BQO5l5Kj9MdErXx6Q6AGOw==
+![](../../assets/images/db/6.png)
+![](../../assets/images/db/7.png)
+
+Decrypt sqlite3 
+[https://github.com/funoverip/mcafee-sitelist-pwd-decryption](https://github.com/funoverip/mcafee-sitelist-pwd-decryption)
+
+
+
