@@ -1,10 +1,9 @@
 // List of categories for blog posts
 export const CATEGORIES = [
 	'Defensive',
-	'Embedded',
+	'Recent Threats',
 	'Cloud',
-	'Portswigger labs',
 	'Hacking Tips',
-	'ICS',
+	'Embedded',
 	'CTF'
 ] as const
