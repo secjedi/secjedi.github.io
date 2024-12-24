@@ -120,23 +120,10 @@ Recall that we have a list of potential users, we bruteforce using Burp Intruder
 
 ![](../../assets/images/ent/git.png)
 
+We see this THM enterprise repo, looking closely, we see the About-Us repo that has 2 commits already.
+![](../../assets/images/ent/git_page.png)
+![](../../assets/images/ent/git_page2.png)
 
 
+Digging deeper...
 
-##  AESRepRoast
-```
-└─$ impacket-GetNPUsers -dc-ip 10.10.105.193 LAB.ENTERPRISE.THM/ -usersfile users.txt -outputfile hash -format john
-```
-
-
-
-
-
-
-
-Do AD vulnerability scans
-```
-└─$ netexec smb 10.10.105.193 -M coerce_plus
-```
-![](../../assets/images/ent/vuln.png)
-Read more about PetitPotam [here](https://www.truesec.com/hub/blog/from-stranger-to-da-using-petitpotam-to-ntlm-relay-to-active-directory)
