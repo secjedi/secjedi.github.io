@@ -14,11 +14,11 @@ title: GraphQL Hacking
 
 We need to first find the GraphQL API endpoint. We are looking for common endpoints like
 
-* /graphql
-* /api
-* /api/graphql
-* /graphql/api
-* /graphql/graphql
+- /graphql
+- /api
+- /api/graphql
+- /graphql/api
+- /graphql/graphql
 
 If these endpoint do not return GraphQL response, append directory like /v1 to the path. For non-GraphQL request, we get a "query not present" error or similar error.
 

