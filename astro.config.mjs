@@ -16,7 +16,6 @@ export default defineConfig({
 		}
 		
 	},
-	base:'/secjedi.github.io',
 	integrations: [
 		mdx({
 			syntaxHighlight: 'shiki',
