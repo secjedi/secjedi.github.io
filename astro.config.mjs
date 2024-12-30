@@ -14,7 +14,9 @@ export default defineConfig({
 			theme: 'material-theme-palenight',
 			wrap: true
 		}
+		
 	},
+	base:'/secjedi.github.io',
 	integrations: [
 		mdx({
 			syntaxHighlight: 'shiki',
