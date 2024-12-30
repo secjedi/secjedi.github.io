@@ -10,7 +10,7 @@ interface SiteConfig {
 
 export const siteConfig: SiteConfig = {
 	author: 'EMO', // Site author
-	title: "Evi's Blog", // Site title.
+	title: 'secjedi.io', // Site title.
 	description: 'Learning daily...', // Description to display in the meta tags
 	lang: 'en-GB',
 	ogLocale: 'en_GB',
