@@ -13,8 +13,6 @@ tags:
 This blog explains a breakdown of the SQLi vulnerbility in LoginAdmin page of OWASP juice shop
 
 ## Code Review
-
-
 ```
 models.sequelize.query(`SELECT * FROM Users WHERE email = '${req.body.email || ''}' 
 AND password = '${security.hash(req.body.password || '')}' 
