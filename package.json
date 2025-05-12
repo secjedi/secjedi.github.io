@@ -30,7 +30,7 @@
 		"format": "prettier --plugin-search-dir=. --write .",
 		"lint": "eslint .",
 		"pre-commit": "lint-staged",
-		"prepare": "husky install"
+		"prepare": "husky"
 	},
 	"dependencies": {
 		"@astrojs/rss": "4.0.10",
