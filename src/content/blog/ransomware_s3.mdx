@@ -22,6 +22,16 @@ A big shout out to Matej Macek for granting me access to this AWS workshop playg
 Download the cloud formation config file. and upload in Cloud formation
 
 ## Reviewing Logs
+The key thing to look out for is the `eventname`. This gives us an idea of the action being performed or the API call made to the AWS Account. Common events to look out for include: 
+- `CreateUser`
+- `DescribeInstances`
+- `RunInstances`
+Please review some of the list and their descriptions [here]('https://catalog.us-east-1.prod.workshops.aws/event/dashboard/en-US/workshop/review').
+
+For Querying Cloudtrail logs, we use Athena. In here, for queuries used over and over again, you find them in saved Queries. That is, if your team saved them.
+![saved athena queries](../../assets/images/cloud/aws/ransomware/saved.png)
+
+
 We can run this code to get user-related cloud trail events
 ```
 -- User Activity Summary
