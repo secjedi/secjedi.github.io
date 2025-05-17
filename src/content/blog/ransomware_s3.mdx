@@ -2,7 +2,7 @@
 title: 'Ransomware on S3 - Security Event Simulation and Detection'
 description: >-
   Some cool tricks to investigate a ransomware based security event.
-pubDate: 2025-13-05T22:00:00.000Z
+pubDate: 2025-05-14T22:00:00.000Z
 heroImage: ../../assets/images/cloud/aws/ransomware/banner.png
 category: Cloud
 tags:
@@ -30,6 +30,18 @@ Please review some of the list and their descriptions [here]('https://catalog.us
 
 For Querying Cloudtrail logs, we use Athena. In here, for queuries used over and over again, you find them in saved Queries. That is, if your team saved them.
 ![saved athena queries](../../assets/images/cloud/aws/ransomware/saved.png)
+
+To test queries:
+- Fetch data from `irworkshopgluedatabase` from the `irworkshopgluetablevpcflow` table. Limit result to 10
+```SQL
+SELECT * FROM "irworkshopgluedatabase"."irworkshopgluetablevpcflow" limit 10;
+```
+Here, we are fetching from the `AWSDataCatalog` as our datasource and we have mentioned the database and table above.
+![Test Athena queries](../../assets/images/cloud/aws/ransomware/test_query.png)
+
+
+
+
 
 
 We can run this code to get user-related cloud trail events
