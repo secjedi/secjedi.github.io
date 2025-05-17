@@ -10,8 +10,8 @@ interface SiteConfig {
 
 export const siteConfig: SiteConfig = {
 	author: 'Evidence Monday', // Site author
-	title: "secjedi.io", // Site title.
-	description: 'Learning daily...', // Description to display in the meta tags
+	title: 'secjedi.io', // Site title.
+	description: 'Learning daily... and documenting it', // Description to display in the meta tags
 	lang: 'en-GB',
 	ogLocale: 'en_GB',
 	shareMessage: 'Share this post', // Message to share a post on social media
