@@ -16,7 +16,14 @@ tags:
 # Ransomware on S3 - Simulation and Detection
 
 This blog explains what to do or consider when investigating a ransomware scenarion that involves data exfiltration in AWS. We will explore the use of Athena to query Cloudtrail event logs.
-A big shout out to Matej Macek for granting me access to this AWS workshop playground. The workshop is available [here]('https://catalog.workshops.aws/aws-cirt-ransomware-simulation-and-detection/en-US') and can be spinned up in different environment like the AWS free-tier env, and followed through.
+A big shout out to Matej Macek for granting me access to this AWS workshop playground. The workshop is available [here]('https://catalog.workshops.aws/aws-cirt-ransomware-simulation-and-detection/en-US') and can be spined up in different environment like the AWS free-tier env, and followed through.
+
+## In a Nutshell
+- We have a timeline of event
+- 
+
+
+
 
 
 ## Setup
@@ -219,9 +226,16 @@ Recall that the suspicious bucket was created by the `tdir-workshop-rroe-dev` us
 ![attacker's username](../../assets/images/cloud/aws/ransomware/user.png)
 This timeframe shows that the event happened between step 1 and 2. So, we know that `tdir-workshop-jstiles-dev` created an accesskey for `tdir-workshop-rroe-dev` which was then used to create the suspicious bucket.
 
-### Investigation Part III
+
+From before..
+![activity of unauthorized user](../../assets/images/cloud/aws/ransomware/1.png)
+We saw that the  `tdir-workshop-rroe-dev` user can only perform limited funtion as seen Creatbucket, listbucket, tagging, etc. The event by the `tdir-workshop-rroe-dev` user stopped at 	
+2025-05-17T17:33:13Z after which the `tdir-workshop-jstiles-dev` user immediately started making API calls. The last activities of `tdir-workshop-jstiles-dev` user is deleting access keys and listing the access keys to make sure it was deleted.
+
+
+### Investigation Part III - CloudWatch
 #### Q9: Were any buckets deleted? If so, which ones?
-Search for bucket deletio query
+Search for bucket deletion query
 ```
 SELECT eventtime,eventname,requestparameters FROM "irworkshopgluedatabase"."irworkshopgluetablecloudtrail" where eventname = 'DeleteBucket'
 ```
@@ -233,10 +247,94 @@ To determine if any object was taken from any S3 buckets
 SELECT eventtime,eventname,requestparameters FROM "irworkshopgluedatabase"."irworkshopgluetablecloudtrail" where eventname = 'GetObject' 
 ```
 ![objects taken from buckets](../../assets/images/cloud/aws/ransomware/12.png)
+
 Here, we can see that multiple objects (excel files) were taken out of bucket `simulation-bucket-*`
 
 
 #### Q11: How many bytes were deleted from this bucket? How many bytes were transferred out?
+To get the bytes downloaded from S3 buckets we look at  Billing and Cost Management, then select Data Exports. Then look at AWS Usage Report
+![AWS usage report](../../assets/images/cloud/aws/ransomware/13.png)
+
+Under services, we select Amazon Simple Storage Service and download CSV report.
+![Download S3 AWS usage report](../../assets/images/cloud/aws/ransomware/14.png)
+
+After download, we can open the csv fikele and sort by UsageValue. In this file, we are interested in teh GetObject and DeletecObject Calls; these are 
+![Downloaded CSV with Data Usage](../../assets/images/cloud/aws/ransomware/15.png)
+
+`2280960000` bytes of files were taken from the `simulation-bucket-02-5ty92vk7r0z6qih8` and `760320000` bytes of files were deleted from the same bucket.
+
+Cloudwatch can also be used to view S3 mterics. Key metrics to look out for are: `DeleteRequests: Sum` and `BytesDownloaded: Sum`. This provide sum of total delete requests and downloaded bytes which are good indicators of ransomware activities.
+On the AWS Console, go to CloudWatch, select Service dashboard, select S3
+![Service dashboards](../../assets/images/cloud/aws/ransomware/16.png)
+
+![Service dashboards](../../assets/images/cloud/aws/ransomware/17.png)
+
+Here, change refresh time to 10 seconds and time range to 1 hour.
+![S3 Service dashboards](../../assets/images/cloud/aws/ransomware/18.png)
+
+Let's look at `DeleteRequests: Sum` tab, we see a marker indicating the total number of requests for deletions. In this case, we have 75.
+![DeleteRequests: Sum](../../assets/images/cloud/aws/ransomware/19.png)
+
+In the `BytesDownloaded: Sum` tab, we can see we have 2,281,077,404 of downloaded bytes, which is close to the GetObject API call we saw in the previous CSV file.
+![BytesDownloaded: Sum](../../assets/images/cloud/aws/ransomware/20.png)
+
+This provides additional evidence for Data exfiltration and deletion
+
+### Investigation Part Investigation - GuardDuty
+#### Q12: It seems as if Server Access Logging was disabled. What was the name of the IAM user that disabled Server Access Logging?
+GuardDuty tells us whether the server access logging was disabled. So we can go to GuardDuty and review the alerts on there.
+![GuardDuty](../../assets/images/cloud/aws/ransomware/21.png)
+We see the AccessLoggingDisabled alert on S3, the affected resources and the IAM user who disabled logging for the S3 bucket: `tdir-workshop-rroe-dev`.
+
+
+#### Q13: What time was it disabled?
+Digging Deeper into the `Action` section of the alert, we see the time, the API call made to disable logging and the IP address of the attacker.
+![GuardDuty](../../assets/images/cloud/aws/ransomware/22.png)
+
+#### Q14: What was the API call that was made to disable Server Access Logging?
+From the image above: `PutBucketLogging`
+
+
+#### Q15: The customer has made you aware of another top-secret, highly confidential file: `company-secrets.doc`. Was this object deleted? Was it taken?
+We can search for actitives made to the highly confidential `company-secrets.doc` file using Athena.
+```
+SELECT eventtime, eventname, useridentity, sourceipaddress, useragent, requestparameters, responseelements FROM "irworkshopgluedatabase"."irworkshopgluetablecloudtrail" where requestparameters like '%company-secrets.doc%'
+```
+We get no result here, indicating that, we cannot say whether the file was accessed or deleted. We dont have evidenceto prove this.
+
+To move forward with the Investigation, since we saw that the `PutBucketLogging` APi used by the attacker, we use Athena to filter through this event.
+
+```
+SELECT eventtime, eventname, useridentity, sourceipaddress, useragent, requestparameters, responseelements FROM "irworkshopgluedatabase"."irworkshopgluetablecloudtrail" where eventname = 'PutBucketLogging'
+```
+![Comparing](../../assets/images/cloud/aws/ransomware/23.png)
+Comparing GuardDuty and Athena results, we can confirm the source ip address is `54.237.233.115`
+
+Also, checking for the logging status of the S3 bucket to verify. We can check on CloudShell
+
+```
+aws s3api get-bucket-logging --bucket simulation-bucket-04-pi5jrgtsd8210h9v
+```
+![Check Logging Status](../../assets/images/cloud/aws/ransomware/24.png)
+
+We can go to the S3 bucket itself to reonfigure logging
+![Check Logging Status](../../assets/images/cloud/aws/ransomware/25.png)
+![Check Logging Status](../../assets/images/cloud/aws/ransomware/26.png)
+![Check Logging Status](../../assets/images/cloud/aws/ransomware/27.png)
+
+Now, when we run the same `get-bucket-logging` command...
+![Check Logging Status](../../assets/images/cloud/aws/ransomware/28.png)
+
+Logging is now enabled
+
+## Lesson Learned
+- Do not panic, you have a game plan, stick with it.
+- Your key tools for investigation process are Athena to query Cloudtrail logs and GuardDuty
+- Remember there could be more than one malicious IAM user
+- Get a timeline of events, and crosscheck every user activity with suspicious API calls. Do not focus on one user alone.
+- For resources claimed to be stolen, verify if it is indeed stolen, check if you have an offline backup of these files as well.
+- Remember to enable logging on important resources on your environment.
+- Make sure GuardDuty. CloudWatch and CloudTrail are enabled in your environment
 
 
 
