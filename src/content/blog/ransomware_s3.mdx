@@ -15,8 +15,8 @@ tags:
 
 # Ransomware on S3 - Simulation and Detection
 
-This blog explains what to do or consider when investigating a ransomware scenarion that involves data exfiltration in AWS. We will explore the use of Athena to query Cloudtrail event logs.
-A big shout out to Matej Macek for granting me access to this AWS workshop playground. The workshop is available [here]('https://catalog.workshops.aws/aws-cirt-ransomware-simulation-and-detection/en-US') and can be spined up in different environment like the AWS free-tier env, and followed through.
+This blog explains what to do or consider when investigating a ransomware scenario that involves data exfiltration in AWS. We will explore the use of Athena to query Cloudtrail event logs.
+A big shout out to Matej Macek for granting me access to this AWS workshop playground. The workshop is available [here]('https://catalog.workshops.aws/aws-cirt-ransomware-simulation-and-detection/en-US') and can be deployed in different environment like using the AWS free-tier accounts, and followed through.
 
 ## In a Nutshell
 - We have a timeline of event
@@ -36,7 +36,7 @@ The key thing to look out for is the `eventname`. This gives us an idea of the a
 - `RunInstances`
 Please review some of the list and their descriptions [here]('https://catalog.us-east-1.prod.workshops.aws/event/dashboard/en-US/workshop/review').
 
-For Querying Cloudtrail logs, we use Athena. In here, for queuries used over and over again, you find them in saved Queries. That is, if your team saved them. You can also save different queries in different work groups.
+For Querying Cloudtrail logs, we use Athena. On here, you find queries that can be reused in the Saved Queries tab. That is, if your team saved them. You can also save different queries in different work groups.
 ![saved athena queries](../../assets/images/cloud/aws/ransomware/saved.png)
 
 To test queries:
@@ -62,7 +62,7 @@ AND eventname NOT LIKE 'List%'
 AND eventname NOT LIKE 'Describe%'
 AND date_partition >= '2021/07/3'
 AND date_partition <= '2025/05/12'
-AND account_partition = '637423349219'
+AND account_partition = 'ACCOUNTID'
 AND region_partition in ('us-east-1','us-east-2','us-west-2', 'us-west-2')
 GROUP BY useridentity.arn
 ```
@@ -73,12 +73,12 @@ We can see the result showing the different events that was triggered.
 ![](../../assets/images/cloud/aws/ransomware/res.png)
 
 ## Simulation
-Ransomware occured through the use of script invoked within AWS CloudShell. The script that will be deployed mimics common activities seen by AWS CIRT (Customer Incident Response Team).
+Ransomware occurred through the use of script invoked within AWS CloudShell. The script that will be deployed mimics common activities seen by AWS CIRT (Customer Incident Response Team).
 - Download script provided
 - Open CloudShell and upload.
 ![open cloudshell](../../assets/images/cloud/aws/ransomware/open.png)
 ![upload simulation script](../../assets/images/cloud/aws/ransomware/up.png)
-Now the script is uploaded, we can verify it byt running the ls command
+Now the script is uploaded, we can verify it by running the ls command
 ![upload simulation script](../../assets/images/cloud/aws/ransomware/upl.png)
 - Run script
 ```
@@ -86,12 +86,12 @@ chmod +x ransomware_security_event_simulation.sh
 ./ransomware_security_event_simulation.sh
 ```
 ![upload simulation script](../../assets/images/cloud/aws/ransomware/runn.png)
-Once the simulation is don running, we have the simulation deployed to our environment already.
+Once the simulation is done running, we have the simulation deployed to our environment already.
 ![upload simulation script](../../assets/images/cloud/aws/ransomware/runnn.png)
-Now we can proceed to investi which is the intereating part.
+Now we can proceed to Detection
 
 ## Detection
-In this section we will take stesp to investigate unauthorized data exfiltration and deletion. Each subsection covers questions asked during a Ransomware incident.
+In this section we will take steps to investigate unauthorized data exfiltration and deletion. Each subsection covers questions asked during a Ransomware incident.
 
 ### Investigation Part I - CloudTrail & Athena
 Cloudtrail monitors account activities so this is our first point of interest during a Ransomware scenario.
@@ -100,14 +100,14 @@ In this case, we will use Athena to review and query the Cloudtrail logs
 
 #### Q1: What is the name of the IAM user that created the bucket and what time was it created?
 
-First thing to do in this case is to review the suspicous bucket; where the attacker left the ransomware note.
+First thing to do in this case is to review the suspicious bucket; where the attacker left the ransomware note.
 ![s3 bucket overview](../../assets/images/cloud/aws/ransomware/s31.png)
 ![s3 bucket overview](../../assets/images/cloud/aws/ransomware/s32.png)
 
-Downloading and reviewing the ransomware note, we see the data that was exfilterated, the location it was stored, the amount (ransom) requested.
+Downloading and reviewing the ransomware note, we see the data that was exfiltrated, the location it was stored, the amount (ransom) requested.
 ![Ransomware note](../../assets/images/cloud/aws/ransomware/note.png)
 
-Now, we know the suspicious bucket name: `we-stole-ur-data-*` we can go to Athena, use the Queryeditor to get information fro the this bucket and also for `CreateBuckrt` API calls that will be helpful to our Investigation.
+Now, we know the suspicious bucket name: `we-stole-ur-data-*` we can go to Athena, use the Query editor to get information from the this bucket and also for `CreateBucket` API calls that will be helpful to our Investigation.
 
 ```
 SELECT eventtime, eventname, useridentity, sourceipaddress, useragent, requestparameters, responseelements FROM "irworkshopgluedatabase"."irworkshopgluetablecloudtrail" where eventname = 'CreateBucket' and requestparameters like '%we-stole-ur-data-%'
@@ -118,7 +118,7 @@ SELECT eventtime, eventname, useridentity, sourceipaddress, useragent, requestpa
 The `."irworkshopgluetablecloudtrail"` is gotten from the tables in the Data source on the left.
 ![tables in database](../../assets/images/cloud/aws/ransomware/dot.png)
 
-We have the database called `irworkshopgluedatabase`and fetch the cloudtrail table from this databse.
+We have the database called `irworkshopgluedatabase`and fetch the cloudtrail table from this database.
 ![database](../../assets/images/cloud/aws/ransomware/db.png)
 
 Recall that we are interested in the user who created the bucket and the ransom note. So can scroll through the result horizontally the get the `useridentity`
@@ -130,8 +130,8 @@ We can also see the `eventtime` details about the time this event was invoked in
 
 ![eventtime](../../assets/images/cloud/aws/ransomware/user2.png)
 
-The result does not show us any event for `PutObject` API calls. This logs rely on server access logging or capturing events in CloudTrail. The unauthorizeduser not enble this feature before uploading the ransomware note.
-The answer to the question "What is the name of the IAM user that created the bucket and what time was it created?" is `tdir-workshop-rroe-dev` and `2025-05-17T17:33:12Z` (The time will change because I redid the lab durig documentation).
+The result does not show us any event for `PutObject` API calls. This logs rely on server access logging or capturing events in CloudTrail. The unauthorized user not enable this feature before uploading the ransomware note.
+The answer to the question "What is the name of the IAM user that created the bucket and what time was it created?" is `tdir-workshop-rroe-dev` and `2025-05-17T17:33:12Z` (The time will change because I redid the lab during documentation).
 
 We are unable to get the answer to the question: "Was the IAM user that created the bucket the same IAM user that uploaded the ransom note?" due to lack of logging for the suspicious bucket.
 
@@ -154,13 +154,13 @@ Finding out more activities tied to this user.....
 ### Investigation Part II
 We will be answering the following questions:
 #### Q3: In what bucket and prefix/folder location was the `credit-card-data.csv` object stored?
-Since we know the name of the sensitive file stolen, let's use Athena query to find the initial location of this sensitive file and wheather it was indeed stolen.
-NOTE: S3 buckets have data events eanbled in CloudTrail so we can search specifically for a file' data event.
+Since we know the name of the sensitive file stolen, let's use Athena query to find the initial location of this sensitive file and whether it was indeed stolen.
+NOTE: S3 buckets have data events enabled in CloudTrail so we can search specifically for a file' data event.
 ```
 SELECT eventtime, eventname, useridentity, sourceipaddress, useragent, requestparameters, responseelements FROM "irworkshopgluedatabase"."irworkshopgluetablecloudtrail" where requestparameters like '%credit-card-data.csv%'
 ```
 ![location of stolen file](../../assets/images/cloud/aws/ransomware/2.png)
-`HeadObject` and `GetObject` indicates that the objects metadata was gotten and eventually deleted (`DeleteObject`). \n
+`HeadObject` and `GetObject` indicates that the objects metadata was gotten and eventually deleted (`DeleteObject`).
 #### Q4: Did the ransomware group take the object? If so, what was the date and time?
 #### Q5:Was the credit-card-data.csv object deleted?
 
@@ -178,7 +178,7 @@ In the `useridentity` column we see the `username`, `tdir-workshop-jstiles-dev`.
 
 We can also see that the AWS accountid and `accesskeyid` for the `tdir-workshop-jstiles-dev` is also available in the `useridentity` column.
 
-#### Check for other actitives done by this specific user
+#### Check for other activities done by this specific user
 Since we now check if other objects were taken by this user.
 ```
 SELECT eventtime, eventname, useridentity, sourceipaddress, useragent, requestparameters, responseelements FROM "irworkshopgluedatabase"."irworkshopgluetablecloudtrail" where eventname = 'GetObject' and useridentity.username = 'tdir-workshop-jstiles-dev'
@@ -200,7 +200,7 @@ SELECT eventtime, eventname, useridentity, sourceipaddress, useragent, requestpa
 ```
 ![Attacker's other activities](../../assets/images/cloud/aws/ransomware/9.png)
 
-Soe definitions of the API calls made:
+Some definitions of the API calls made:
 
 - `ListBuckets` unauthorized user listed the S3 buckets in the account. Unfortunately, CloudTrail does not list the results of this API command
 - `ListObjects` The unauthorized user listed the S3 objects within a bucket. While the objects themselves are not listed, we can see the name of the S3 bucket containing the objects that were listed as well as the folder/prefix location in the requestparameters column
@@ -229,7 +229,7 @@ This timeframe shows that the event happened between step 1 and 2. So, we know t
 
 From before..
 ![activity of unauthorized user](../../assets/images/cloud/aws/ransomware/1.png)
-We saw that the  `tdir-workshop-rroe-dev` user can only perform limited funtion as seen Creatbucket, listbucket, tagging, etc. The event by the `tdir-workshop-rroe-dev` user stopped at 	
+We saw that the  `tdir-workshop-rroe-dev` user can only perform limited function as seen Creatbucket, listbucket, tagging, etc. The event by the `tdir-workshop-rroe-dev` user stopped at 	
 2025-05-17T17:33:13Z after which the `tdir-workshop-jstiles-dev` user immediately started making API calls. The last activities of `tdir-workshop-jstiles-dev` user is deleting access keys and listing the access keys to make sure it was deleted.
 
 
@@ -258,12 +258,12 @@ To get the bytes downloaded from S3 buckets we look at  Billing and Cost Managem
 Under services, we select Amazon Simple Storage Service and download CSV report.
 ![Download S3 AWS usage report](../../assets/images/cloud/aws/ransomware/14.png)
 
-After download, we can open the csv fikele and sort by UsageValue. In this file, we are interested in teh GetObject and DeletecObject Calls; these are 
+After download, we can open the csv file and sort by UsageValue. In this file, we are interested in the GetObject and DeletecObject Calls; these are 
 ![Downloaded CSV with Data Usage](../../assets/images/cloud/aws/ransomware/15.png)
 
 `2280960000` bytes of files were taken from the `simulation-bucket-02-5ty92vk7r0z6qih8` and `760320000` bytes of files were deleted from the same bucket.
 
-Cloudwatch can also be used to view S3 mterics. Key metrics to look out for are: `DeleteRequests: Sum` and `BytesDownloaded: Sum`. This provide sum of total delete requests and downloaded bytes which are good indicators of ransomware activities.
+Cloudwatch can also be used to view S3 metrics. Key metrics to look out for are: `DeleteRequests: Sum` and `BytesDownloaded: Sum`. This provide sum of total delete requests and downloaded bytes which are good indicators of ransomware activities.
 On the AWS Console, go to CloudWatch, select Service dashboard, select S3
 ![Service dashboards](../../assets/images/cloud/aws/ransomware/16.png)
 
@@ -296,13 +296,13 @@ From the image above: `PutBucketLogging`
 
 
 #### Q15: The customer has made you aware of another top-secret, highly confidential file: `company-secrets.doc`. Was this object deleted? Was it taken?
-We can search for actitives made to the highly confidential `company-secrets.doc` file using Athena.
+We can search for activities made to the highly confidential `company-secrets.doc` file using Athena.
 ```
 SELECT eventtime, eventname, useridentity, sourceipaddress, useragent, requestparameters, responseelements FROM "irworkshopgluedatabase"."irworkshopgluetablecloudtrail" where requestparameters like '%company-secrets.doc%'
 ```
-We get no result here, indicating that, we cannot say whether the file was accessed or deleted. We dont have evidenceto prove this.
+We get no result here, indicating that, we cannot say whether the file was accessed or deleted. We dont have evidence to prove this.
 
-To move forward with the Investigation, since we saw that the `PutBucketLogging` APi used by the attacker, we use Athena to filter through this event.
+To move forward with the Investigation, since we saw that the `PutBucketLogging` API used by the attacker, we use Athena to filter through this event.
 
 ```
 SELECT eventtime, eventname, useridentity, sourceipaddress, useragent, requestparameters, responseelements FROM "irworkshopgluedatabase"."irworkshopgluetablecloudtrail" where eventname = 'PutBucketLogging'
@@ -317,7 +317,7 @@ aws s3api get-bucket-logging --bucket simulation-bucket-04-pi5jrgtsd8210h9v
 ```
 ![Check Logging Status](../../assets/images/cloud/aws/ransomware/24.png)
 
-We can go to the S3 bucket itself to reonfigure logging
+We can go to the S3 bucket itself to reconfigure logging
 ![Check Logging Status](../../assets/images/cloud/aws/ransomware/25.png)
 ![Check Logging Status](../../assets/images/cloud/aws/ransomware/26.png)
 ![Check Logging Status](../../assets/images/cloud/aws/ransomware/27.png)
@@ -329,7 +329,7 @@ Logging is now enabled
 
 ## Lesson Learned
 - Do not panic, you have a game plan, stick with it.
-- Your key tools for investigation process are Athena to query Cloudtrail logs and GuardDuty
+- Your key tools for investigation process are Athena to query Cloudtrail & VPCflow logs, GuardDuty, AWS Billing & Cost Management and CloudWatch
 - Remember there could be more than one malicious IAM user
 - Get a timeline of events, and crosscheck every user activity with suspicious API calls. Do not focus on one user alone.
 - For resources claimed to be stolen, verify if it is indeed stolen, check if you have an offline backup of these files as well.
