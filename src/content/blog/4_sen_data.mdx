@@ -13,8 +13,10 @@ tags:
 This blog explains a breakdown of the Sensitive Data Exposure vulnerability in the OWASP juice shop website.
 
 ## Access Log
+
 Objective: find files we shouldn't have access to.
 URL: `http://3.75.183.20:3000/`
+
 - We are using directory bruteforcing here
 - `└─$ dirsearch -u http://3.75.183.20:3000/ -r                                  
 `
@@ -23,6 +25,7 @@ URL: `http://3.75.183.20:3000/`
 - run directory bruteforce with /support
 
 ## Email Leak
+
 - Login as normal user `[new username]: [password]`
 - Intercept request in burp, send to repeater
 - delete bearer token

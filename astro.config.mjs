@@ -14,7 +14,6 @@ export default defineConfig({
 			theme: 'material-theme-palenight',
 			wrap: true
 		}
-		
 	},
 	integrations: [
 		mdx({
