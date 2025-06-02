@@ -1,4 +1,0 @@
-User-agent: *
-Allow: /
-
-Sitemap: https://evidencemonday.site/sitemap-index.xml
