@@ -1,0 +1,70 @@
+---
+title: OWASP Juice Shop Admin Login
+heroImage: ../../assets/images/OWASP_JS/img/inject.png
+category: CTF
+description: Explore SQL Injection.
+pubDate: 2025-03-16T23:00:00.000Z
+tags:
+  - OWASP Juice Shop
+  - Hacking Tip
+  - SQLi
+---
+
+This blog explains a breakdown of the SQLi vulnerbility in LoginAdmin page of OWASP juice shop
+
+## Code Review
+
+```
+models.sequelize.query(`SELECT * FROM Users WHERE email = '${req.body.email || ''}'
+AND password = '${security.hash(req.body.password || '')}'
+AND deletedAt IS NULL`, { model: models.User, plain: true })
+
+```
+
+- The values req.body.email and security.hash(req.body.password) are directly inserted into the SQL query as string interpolation.
+- This makes the query vulnerable to SQL Injection if an attacker provides malicious input.
+
+## How can an Attacker Exploit This
+
+If an attacker enters this in the email field:
+
+```
+admin' or 1=1;--
+```
+
+Then the query becomes:
+
+```
+SELECT * FROM Users WHERE email = 'admin' OR '1'='1';
+AND password = 'somehash'
+AND deletedAt IS NULL
+```
+
+Breaking it down:
+
+- email = 'admin' → Checks if the username is admin.
+- 1=1 → Always TRUE (since 1=1 is always true).
+- -- → This is a comment in SQL, which ignores the rest of the query (AND password = '' is ignored).
+
+- Since '1'='1' is always true, the query could return the all users, bypassing authentication.
+- An attacker could log in as the first user in the database (often an admin).
+
+More Advanced Attack
+Attacker inputs
+
+```
+'; DROP TABLE Users; --
+```
+
+The SQL query might execute:
+
+```
+SELECT * FROM Users WHERE email = ''; DROP TABLE Users; --' AND password = 'somehash' AND deletedAt IS NULL
+```
+
+### Takeaways
+
+1. admin' OR 1=1;-- bypasses authentication by always making the condition true.
+2. Using raw SQL queries with user input is dangerous (unless properly handled).
+3. Fix it with parameterized queries or ORM methods.
+4. Enhance security with rate limiting, MFA, and password hashing.

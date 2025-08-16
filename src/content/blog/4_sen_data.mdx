@@ -1,0 +1,32 @@
+---
+title: OWASP Jucie Shop Sensitive Data Exposure
+heroImage: ../../assets/images/OWASP_JS/img/OWASP-3-Code-Example-EN.png
+category: CTF
+description: Explore Sensitive Data Exposure.
+pubDate: 2025-03-16T23:00:00.000Z
+tags:
+  - OWASP Juice Shop
+  - Hacking Tip
+  - Sensitive Data Exposure
+---
+
+This blog explains a breakdown of the Sensitive Data Exposure vulnerability in the OWASP juice shop website.
+
+## Access Log
+
+Objective: find files we shouldn't have access to.
+URL: `http://3.75.183.20:3000/`
+
+- We are using directory bruteforcing here
+- `└─$ dirsearch -u http://3.75.183.20:3000/ -r                                  
+`
+- `└─$ ffuf -r -w /usr/share/wordlists/dirb/common.txt -u '└─$ ffuf -r -w /usr/share/wordlists/dirb/common.txt -u 'http://18.194.140.140:3000/FUZZ' -fs 1987 -o result.txt`
+- We could see `ftp` directory that we have access to
+- run directory bruteforce with /support
+
+## Email Leak
+
+- Login as normal user `[new username]: [password]`
+- Intercept request in burp, send to repeater
+- delete bearer token
+- on the `/rest/user/whoami?callback=admin`

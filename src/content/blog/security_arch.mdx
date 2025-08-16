@@ -1,0 +1,28 @@
+---
+title: Overview of Security Architecture in My Home Lab
+heroImage: ../../assets/images/cloud/sec_arch/sec.png
+category: Defensive
+description: Experimenting with Security Architecture.
+pubDate: 2025-04-12T23:00:00.000Z
+tags:
+  - Security Architecture
+  - Networking
+---
+
+This blog explains a breakdown of what I am learning on Security Architecture
+
+## Network Topology
+
+```
+Internet → Virtual Firewall → Switch (Virtual) → VMs (SIEM, AD, Linux, Attacker Machine)
+                                    ↘ Separate VLANs for Isolation
+
+```
+
+## IP Addressing
+
+- VLAN | Purpose | Subnet
+- Mgmt VLAN | Admin management | 192.168.1.0/24
+- Workstation VLAN | User machines | 192.168.2.0/24
+- Server VLAN | AD, SIEM, etc. | 192.168.3.0/24
+- Attacker VLAN | Kali Linux | 192.168.99.0/24

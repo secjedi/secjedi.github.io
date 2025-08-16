@@ -1,0 +1,51 @@
+---
+title: OWASP Jucie Shop. Broken Access Control
+heroImage: ../../assets/images/OWASP_JS/img/door.png
+category: CTF
+description: Explore Broken Access Control Mechanisms.
+pubDate: 2025-03-16T23:00:00.000Z
+tags:
+  - OWASP Juice Shop
+  - Hacking Tip
+  - Broken Acess Control
+---
+
+This blog explains a breakdown of the Broken Access Control in the OWASP juice shop website.
+
+## Manipulate Basket
+
+Put another product in another user's shopping Basket
+
+- Go to Account > Login > register new user
+  ![New user create](../../assets/images/OWASP_JS/BAC/new_user.png)
+- Now login with new user
+  ![New user login](../../assets/images/OWASP_JS/BAC/log.png)
+- Go to basket. See that it's empty
+- Go to Home page and add Banana Juice to basket
+  ![New user login](../../assets/images/OWASP_JS/BAC/bas.png)
+
+- Go to burp and check request
+- See the productId, BascketId and quantity
+- Send request again, we see a product id validation error
+  ![errors](../../assets/images/OWASP_JS/BAC/err.png)
+- Change productid and try again
+  ![success](../../assets/images/OWASP_JS/BAC/suc.png)
+  Noe we get a success reponse
+- Let's check our basket for the added product
+  ![success](../../assets/images/OWASP_JS/BAC/add.png)
+- We see a T-Shirt
+- Now, that we understand the functionality, let's see if we can add something to another basket that we shouldn't have access to
+- Change basketid to 6, we et 401 unauthorized error. Now, what can we do to circumvent this control
+  ![Error BAC Basketid change](../../assets/images/OWASP_JS/BAC/err2.png)
+
+- There are fairly various mechanisms to bypass access control
+
+[See OWASP parameter pollution strategies](https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/07-Input_Validation_Testing/04-Testing_for_HTTP_Parameter_Pollution)
+
+We could try to send the request with the parameter twice
+
+- So, what we're trying to do here is parameter pollution.
+
+- After lots of maniputlation, we get a successful addition
+  ![Error BAC Basketid change](../../assets/images/OWASP_JS/BAC/succ.png)
+- We see that using the actual basketid first before the target basket leads us to add items to a basket we originally should not have contorl over.

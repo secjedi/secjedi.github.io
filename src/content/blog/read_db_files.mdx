@@ -1,0 +1,40 @@
+---
+title: 'How to decrypt DB password'
+description: 'This is a shot demonstration on how to read/ decrypt sqlite .db files. Experpt from the Breaching AD room on Tryhackme.'
+pubDate: 'Jul 02 2022'
+heroImage: '../../assets/images/DB.png'
+category: 'Hacking Tips'
+tags: ['THM', '.db files', 'SQL']
+---
+
+## SQLite browser
+
+:::note[sqlitebrowser] We are using sqlite browser found on kali machine. We use it to visulaize the ma.db file found on the tryhackme room.
+
+See Config files section here:
+https://tryhackme.com/room/breachingad
+![](../../assets/images/db/1.png)
+![](../../assets/images/db/2.png)
+
+OR
+
+```
+sqlite3 ./Audit.db
+.tables
+.schema Ldap
+select uname, pwd FROM Ldap;
+```
+
+![](../../assets/images/db/3.png)
+![](../../assets/images/db/4.png)
+![](../../assets/images/db/5.png)
+
+Decode sqlite password
+https://dotnetfiddle.net/G2eVVb
+
+Google decode BQO5l5Kj9MdErXx6Q6AGOw==
+![](../../assets/images/db/6.png)
+![](../../assets/images/db/7.png)
+
+Decrypt sqlite3
+[https://github.com/funoverip/mcafee-sitelist-pwd-decryption](https://github.com/funoverip/mcafee-sitelist-pwd-decryption)

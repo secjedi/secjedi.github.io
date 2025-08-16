@@ -1,0 +1,27 @@
+---
+heroImage: /src/assets/images/GraphQL/ban.png
+category: Hacking Tips
+description: Learning about GraphQL from Portswigger Academy
+pubDate: 2024-07-29T22:00:00.000Z
+tags:
+  - API
+  - Web
+  - GraphQL
+title: GraphQL Hacking
+---
+
+## Find endpoints
+
+We need to first find the GraphQL API endpoint. We are looking for common endpoints like
+
+- /graphql
+- /api
+- /api/graphql
+- /graphql/api
+- /graphql/graphql
+
+If these endpoint do not return GraphQL response, append directory like /v1 to the path. For non-GraphQL request, we get a "query not present" error or similar error.
+
+## Request Methods
+
+After finding endpoints, test with different request methods.
