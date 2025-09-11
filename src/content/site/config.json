@@ -1,8 +1,8 @@
 {
   "home": {
     "name": "Evidence Monday",
-    "title": "Security Engineer & Always Learning",
-    "introduction": "I’m constantly learning and evolving. I love diving into new ideas and finding creative ways to solve problems.",
+    "title": "Security Engineer & Learning Daily",
+    "introduction": "Skilled in penetration testing across web, infrastructure, thick client, and OT environments. Strong background in detection engineering, SOC analysis, and incident response using Microsoft Sentinel and Defender for Endpoint. Experienced in AWS and Azure security implementations, with a solid understanding of risk and project management. Continuously advancing strategies for architecting secure environments.",
     "sections": {
       "blog": {
         "title": "Writing",
@@ -27,7 +27,7 @@
         "url": "https://medium.com/@evidencemonday"
       },
       {
-        "platform": "LinkedIn",
+        "platform": "Github",
         "url": "https://github.com/secjedi"
       }
     ]
