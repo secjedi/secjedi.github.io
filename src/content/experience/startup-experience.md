@@ -1,8 +1,8 @@
 ---
-title: "Full Stack Developer at InnovateLabs"
+title: "R&D Cyber Security Tester @ Siemens"
 logo: "/images/companies/innovatelabs.svg"
-description: "Developed and launched a real-time collaboration platform from scratch. Implemented WebSocket-based features, designed the database schema, and built a responsive front-end using React and Material-UI."
-startDate: "2020-06-01"
-endDate: "2021-12-31"
+description: "Researched Linux and IoT firmware security, including FirmAE, PANDA, and FreeRTOS reverse engineering. Conducted penetration testing on embedded devices (MQTT vulnerability discovery) and supported secure design for engineers. Hands-on with Docker container testing and Siemens S7-1500 PLC firmware deployment."
+startDate: "2021-06-01"
+endDate: "2023-01-31"
 current: false
 --- 

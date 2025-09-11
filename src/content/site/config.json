@@ -1,7 +1,7 @@
 {
   "home": {
-    "name": "ByteKai",
-    "title": "Software Engineer & Curious Tinkerer",
+    "name": "Evidence Monday",
+    "title": "Security Engineer & Always Learning",
     "introduction": "I’m constantly learning and evolving. I love diving into new ideas and finding creative ways to solve problems.",
     "sections": {
       "blog": {
@@ -19,12 +19,16 @@
     },
     "socialLinks": [
       {
-        "platform": "GitHub",
-        "url": "https://github.com/bytekai"
+        "platform": "LinkedIn",
+        "url": "https://www.linkedin.com/in/evidencemonday/"
       },
       {
-        "platform": "Twitter",
-        "url": "https://x.com/byteekai"
+        "platform": "Medium",
+        "url": "https://medium.com/@evidencemonday"
+      },
+      {
+        "platform": "LinkedIn",
+        "url": "https://github.com/secjedi"
       }
     ]
   }

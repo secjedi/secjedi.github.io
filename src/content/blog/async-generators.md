@@ -1,8 +1,8 @@
 ---
-title: "Async Generators in JavaScript: Taming the Data Flood"
-description: "A deep dive into using async generators for handling large data streams efficiently"
-publishedAt: 2024-09-15
-tags: ["javascript", "async", "generators", "streams", "performance"]
+title: "OWASP Juice Shop Admin Login"
+description: "Explore SQL Injection."
+publishedAt: 2025-03-16
+tags: ["OWASP Juice Shop", "Hacking Tip", SQLi"]
 ---
 
 ## The Data Deluge
