@@ -1,5 +1,5 @@
 ---
-title: "DevContainers: The Art of Portable Development Environments"
+title: "OWASP Jucie Shop Sensitive Data Exposure"
 description: "Pack your dev environment in a box and take it anywhere"
 publishedAt: 2024-09-16
 tags: ["devcontainers", "development-environment", "docker", "vscode", "productivity"]
